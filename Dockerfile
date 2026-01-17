@@ -1,24 +1,27 @@
-# Getting base image ubuntu
-FROM ubuntu
+###########################################
+# BASE IMAGE
+###########################################
+# Getting base image
+FROM node:20 AS builder
 
 MAINTAINER Rohan Deuja <rrohandeuja@gmail.com>
 
-# everything is done inside /app folder
 WORKDIR /app
 
-# Install Node.js once during build
-RUN apt-get update && apt-get install -y nodejs npm
-
 COPY package*.json ./
+RUN npm install --production
 
-# Install all dependencies listed in package.json
-RUN npm install
-
-# Copy all files from your repo into /app
 COPY . .
 
-# Expose the port your app will run on
+# =========================
+# Stage 2: Distroless runtime
+# =========================
+FROM gcr.io/distroless/nodejs22-debian12
+
+WORKDIR /app
+
+COPY --from=builder /app /app
+
 EXPOSE 3000
 
-# CMD just starts your app
-CMD ["node", "server.js"]
+CMD ["server.js"]
